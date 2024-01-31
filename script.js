@@ -44,6 +44,12 @@ function displayRecipeDetails(recipeId) {
       let name = document.createElement("h2");
       let addBtn = document.createElement("button");
       addBtn.innerText = "Lägg till recept";
+      let commentForm = document.createElement("form");
+      let commentInput = document.createElement("input");
+      commentInput.type = "text";
+      commentInput.placeholder = "Skriv din kommentar här";
+      commentForm.appendChild(commentInput);
+
       name.innerText = data.meals[0].strMeal;
       ul.appendChild(name);
       for (let i = 1; i <= 30; i++) {
@@ -56,6 +62,7 @@ function displayRecipeDetails(recipeId) {
         content.innerText = `${ingredient} - ${measure}`;
         ul.appendChild(content);
       }
+      ul.appendChild(commentForm);
       ul.appendChild(addBtn);
       recipeDetails.appendChild(ul);
 
@@ -63,6 +70,7 @@ function displayRecipeDetails(recipeId) {
         fetch("http://localhost:8080/recipes")
           .then(res => res.json())
           .then(data => {
+            let currentComment = commentInput.value;
             let currentRecipeName = name.innerText;
             let recipeExists = data.some(recipe => recipe.name === currentRecipeName);
             if (recipeExists) {
@@ -75,7 +83,8 @@ function displayRecipeDetails(recipeId) {
                   "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                  name: currentRecipeName
+                  name: currentRecipeName,
+                  comment: currentComment
                 }),
               })
                 .then(response => response.json())
