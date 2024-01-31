@@ -11,7 +11,6 @@ function searchRecipes(query){
   .then(res => res.json())
   .then(data => {
     data.meals.forEach(recipe => {
-      console.log(recipe)
       let ul = document.createElement("ul");
       let content= document.createElement("ul");
       content.innerText = recipe.strMeal;
@@ -37,27 +36,63 @@ toggleMyRecipesBtn.addEventListener("click", function () {
 });
   
 function displayRecipeDetails(recipeId) {
-  recipeDetails.innerHTML="";
+  recipeDetails.innerHTML = "";
   fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${recipeId}`)
-  .then(res => res.json())
-  .then(data => {
-    let ul = document.createElement("ul")
-    let name = document.createElement("h2");
-   
-    name.innerText = data.meals[0].strMeal;
-    ul.appendChild(name);
-    for(let i = 1; i<=30; i++) {
-      let ingredient = data.meals[0][`strIngredient${i}`];
-      let measure = data.meals[0][`strMeasure${i}`];
-      if(!ingredient) {
-        break;
-      }       
-      let content = document.createElement("ul")
-      content.innerText = `${ingredient} - ${measure}`;
-      ul.appendChild(content) 
-    }
-    recipeDetails.appendChild(ul)     
-  });
+    .then(res => res.json())
+    .then(data => {
+      let ul = document.createElement("ul");
+      let name = document.createElement("h2");
+      let addBtn = document.createElement("button");
+      addBtn.innerText = "Lägg till recept";
+      name.innerText = data.meals[0].strMeal;
+      ul.appendChild(name);
+      for (let i = 1; i <= 30; i++) {
+        let ingredient = data.meals[0][`strIngredient${i}`];
+        let measure = data.meals[0][`strMeasure${i}`];
+        if (!ingredient) {
+          break;
+        }
+        let content = document.createElement("ul");
+        content.innerText = `${ingredient} - ${measure}`;
+        ul.appendChild(content);
+      }
+      ul.appendChild(addBtn);
+      recipeDetails.appendChild(ul);
+
+      addBtn.addEventListener("click", function () {
+        fetch("http://localhost:8080/recipes")
+          .then(res => res.json())
+          .then(data => {
+            let currentRecipeName = name.innerText;
+            let recipeExists = data.some(recipe => recipe.name === currentRecipeName);
+            if (recipeExists) {
+              alert("Receptet finns redan i dina recept!");
+            } else {
+              alert("Tillagt recept: " + currentRecipeName);
+              fetch("http://localhost:8080/recipes/add", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  name: currentRecipeName
+                }),
+              })
+                .then(response => response.json())
+                .then(() => {
+                  updateMyRecipes(currentRecipeName)
+                })
+            }
+          });
+      });
+    });
+}
+function updateMyRecipes(recipeName) {
+  let ul = document.createElement("ul");
+  let li = document.createElement("li");
+  li.innerText = recipeName;
+  ul.appendChild(li);
+  myRecipes.appendChild(ul);
 }
 
 fetch("http://localhost:8080/recipes")
@@ -65,41 +100,36 @@ fetch("http://localhost:8080/recipes")
 .then(data => {
   data.forEach(myRecipe => {
     let ul = document.createElement("ul");
-    let content = document.createElement("ul");
+    let recipeContainer = document.createElement("div");
+    let content = document.createElement("span");
     content.innerText = myRecipe.name;
-    ul.appendChild(content);
+    recipeContainer.appendChild(content)
+    let deleteBtn = document.createElement("button");
+    deleteBtn.innerText = "[X]";
+    deleteBtn.addEventListener("click", function () {
+      deleteRecipe(myRecipe.id); 
+      ul.remove(); 
+    });
+    recipeContainer.appendChild(deleteBtn)
+    ul.appendChild(recipeContainer)
     myRecipes.appendChild(ul); 
+    myRecipeDetails(content)
   });
 })
   
-addToMyRecipesBtn.addEventListener("click", function () {
-  let currentRecipeName = document.getElementById("recipeDetails").querySelector("h2").innerText;
-  fetch("http://localhost:8080/recipes")
+function myRecipeDetails(myRecipe) {
+  myRecipe.addEventListener("click", function () {
+    let recipeName = myRecipe.innerText;
+    fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${recipeName}`)
       .then(res => res.json())
       .then(data => {
-        let recipeExists = data.some(recipe => recipe.name === currentRecipeName);
-          if (recipeExists) {
-              alert("Receptet finns redan i dina recept!");
-          } else {
-              fetch("http://localhost:8080/recipes/add", {
-                  method: "POST",
-                  headers: {
-                      "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({
-                      name: currentRecipeName,
-                      comment: "comment",
-                  }),
-              })
-              .then(response => response.json())
-                  alert("Tillagt recept: "+ currentRecipeName)
-                  let ul = document.createElement("ul");
-                  let li = document.createElement("li");
-                  li.innerText = currentRecipeName;
-                  ul.appendChild(li);
-                  myRecipes.appendChild(ul);
-              
-          }
-      })
-});
-
+        let recipeId = data.meals[0].idMeal;
+        displayRecipeDetails(recipeId);
+      });
+  });
+}
+function deleteRecipe(recipeId) {
+  fetch(`http://localhost:8080/recipes/delete/${recipeId}`, {
+    method: "DELETE",
+  })
+}
