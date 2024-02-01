@@ -67,7 +67,6 @@ function displayRecipeDetails(recipeId) {
       recipeDetails.appendChild(ul);
 
       addBtn.addEventListener("click", function () {
-        console.log("adds"+ recipeId)
         fetch("http://localhost:8080/recipes")
           .then(res => res.json())
           .then(data => {
@@ -88,8 +87,7 @@ function displayRecipeDetails(recipeId) {
                   comment: currentComment
                 }),
               })
-               location.reload();
-              
+               location.reload();            
             }
           });
       });
@@ -104,14 +102,36 @@ fetch("http://localhost:8080/recipes")
     let recipeContainer = document.createElement("div");
     let content = document.createElement("span");
     content.innerText = myRecipe.name;
+    content.style.fontSize = "25px";
+
     recipeContainer.appendChild(content)
+    let changeBtn=document.createElement("button")
+    changeBtn.innerText = "Ändra"
+    let commentForm = document.createElement("form");
+    let commentInput = document.createElement("input");
+    commentInput.type = "text";
+    commentInput.placeholder = "Ändra din kommentar här";
+    commentForm.appendChild(commentInput);
+
+    let commentElement = document.createElement("p")
+    commentElement.innerHTML="Kommentar: "+ myRecipe.comment;
+    
     let deleteBtn = document.createElement("button");
     deleteBtn.innerText = "[X]";
     deleteBtn.addEventListener("click", function () {
       deleteRecipe(myRecipe.id); 
       ul.remove(); 
     });
+    changeBtn.addEventListener("click", function () {
+      let currentComment = commentInput.value;
+      updateRecipe(myRecipe.id, currentComment)
+      location.reload();
+    })
     recipeContainer.appendChild(deleteBtn)
+    recipeContainer.appendChild(commentElement)
+    recipeContainer.appendChild(commentForm)
+    recipeContainer.appendChild(changeBtn)
+    
     ul.appendChild(recipeContainer)
     myRecipes.appendChild(ul); 
     myRecipeDetails(content)
@@ -124,14 +144,7 @@ function displayMyRecipeDetails(recipeId) {
     .then(data => {
       let ul = document.createElement("ul");
       let name = document.createElement("h2");
-      let changeBtn = document.createElement("button");
-      changeBtn.innerText = "Ändra";
-      let commentForm = document.createElement("form");
-      let commentInput = document.createElement("input");
-      commentInput.type = "text";
-      commentInput.placeholder = "Ändra din kommentar här";
-      commentForm.appendChild(commentInput);
-
+     
       name.innerText = data.meals[0].strMeal;
       ul.appendChild(name);
       for (let i = 1; i <= 30; i++) {
@@ -144,21 +157,7 @@ function displayMyRecipeDetails(recipeId) {
         content.innerText = `${ingredient} - ${measure}`;
         ul.appendChild(content);
       }     
-      ul.appendChild(commentForm);
-      ul.appendChild(changeBtn);
       recipeDetails.appendChild(ul);
-
-      changeBtn.addEventListener("click", function () {
-        fetch("http://localhost:8080/recipes")
-          .then(res => res.json())
-          .then (data => {
-            data.forEach (myRecipe => {
-            let currentComment = commentInput.value;
-            updateRecipe(myRecipe.id, currentComment);
-            })
-            
-          })          
-      });
     });   
 }
   
@@ -174,15 +173,11 @@ function myRecipeDetails(myRecipe) {
   });
 }
 function deleteRecipe(recipeId) {
-  console.log(recipeId)
   fetch(`http://localhost:8080/recipes/delete/${recipeId}`, {
     method: "DELETE",
   })
 }
 function updateRecipe(recipeId, currentComment) {
-  console.log("id: "+recipeId)
-  console.log("kommentar: " +currentComment)
-  console.log(recipeId)
   fetch(`http://localhost:8080/recipes/update/${recipeId}`, {
     method: "PATCH",
     headers: {
@@ -192,5 +187,4 @@ function updateRecipe(recipeId, currentComment) {
       comment: currentComment,
     }),
   })
-
 }
