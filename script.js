@@ -67,6 +67,7 @@ function displayRecipeDetails(recipeId) {
       recipeDetails.appendChild(ul);
 
       addBtn.addEventListener("click", function () {
+        console.log("adds"+ recipeId)
         fetch("http://localhost:8080/recipes")
           .then(res => res.json())
           .then(data => {
@@ -87,21 +88,12 @@ function displayRecipeDetails(recipeId) {
                   comment: currentComment
                 }),
               })
-                .then(response => response.json())
-                .then(() => {
-                  updateMyRecipes(currentRecipeName)
-                })
+               location.reload();
+              
             }
           });
       });
     });
-}
-function updateMyRecipes(recipeName) {
-  let ul = document.createElement("ul");
-  let li = document.createElement("li");
-  li.innerText = recipeName;
-  ul.appendChild(li);
-  myRecipes.appendChild(ul);
 }
 
 fetch("http://localhost:8080/recipes")
@@ -125,6 +117,45 @@ fetch("http://localhost:8080/recipes")
     myRecipeDetails(content)
   });
 })
+function displayMyRecipeDetails(recipeId) {
+  recipeDetails.innerHTML = "";
+  fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${recipeId}`)
+    .then(res => res.json())
+    .then(data => {
+      let ul = document.createElement("ul");
+      let name = document.createElement("h2");
+      let changeBtn = document.createElement("button");
+      changeBtn.innerText = "Ändra";
+      let commentForm = document.createElement("form");
+      let commentInput = document.createElement("input");
+      commentInput.type = "text";
+      commentInput.placeholder = "Ändra din kommentar här";
+      commentForm.appendChild(commentInput);
+
+      name.innerText = data.meals[0].strMeal;
+      ul.appendChild(name);
+      for (let i = 1; i <= 30; i++) {
+        let ingredient = data.meals[0][`strIngredient${i}`];
+        let measure = data.meals[0][`strMeasure${i}`];
+        if (!ingredient) {
+          break;
+        }
+        let content = document.createElement("ul");
+        content.innerText = `${ingredient} - ${measure}`;
+        ul.appendChild(content);
+      }     
+       let currentComment = commentInput.value;
+       let recipeId = data.id;
+      ul.appendChild(commentForm);
+      ul.appendChild(changeBtn);
+      recipeDetails.appendChild(ul);
+      changeBtn.addEventListener("click", function () {
+ 
+        updateRecipe(recipeId, currentComment);
+      });
+ 
+    });
+}
   
 function myRecipeDetails(myRecipe) {
   myRecipe.addEventListener("click", function () {
@@ -133,12 +164,27 @@ function myRecipeDetails(myRecipe) {
       .then(res => res.json())
       .then(data => {
         let recipeId = data.meals[0].idMeal;
-        displayRecipeDetails(recipeId);
+        displayMyRecipeDetails(recipeId);
       });
   });
 }
 function deleteRecipe(recipeId) {
+  console.log(recipeId)
   fetch(`http://localhost:8080/recipes/delete/${recipeId}`, {
     method: "DELETE",
   })
+}
+function updateRecipe(recipeId, currentComment) {
+  console.log(currentComment)
+  console.log(recipeId)
+  fetch(`http://localhost:8080/recipes/nupdate/${recipeId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      comment: currentComment,
+    }),
+  })
+
 }
