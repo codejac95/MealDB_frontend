@@ -16,11 +16,11 @@ function searchRecipes(query){
       content.innerText = recipe.strMeal;
       content.addEventListener("click", function () {
         displayRecipeDetails(recipe.idMeal);
-    });
+      });
       ul.appendChild(content);
       searchResults.appendChild(ul);
     });
-})
+  })
 }
 searchBtn.addEventListener("click", function () {
   let searchTerm = searchInput.value.trim();
