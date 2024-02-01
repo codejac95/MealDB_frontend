@@ -144,17 +144,22 @@ function displayMyRecipeDetails(recipeId) {
         content.innerText = `${ingredient} - ${measure}`;
         ul.appendChild(content);
       }     
-       let currentComment = commentInput.value;
-       let recipeId = data.id;
       ul.appendChild(commentForm);
       ul.appendChild(changeBtn);
       recipeDetails.appendChild(ul);
+
       changeBtn.addEventListener("click", function () {
- 
-        updateRecipe(recipeId, currentComment);
+        fetch("http://localhost:8080/recipes")
+          .then(res => res.json())
+          .then (data => {
+            data.forEach (myRecipe => {
+            let currentComment = commentInput.value;
+            updateRecipe(myRecipe.id, currentComment);
+            })
+            
+          })          
       });
- 
-    });
+    });   
 }
   
 function myRecipeDetails(myRecipe) {
@@ -175,9 +180,10 @@ function deleteRecipe(recipeId) {
   })
 }
 function updateRecipe(recipeId, currentComment) {
-  console.log(currentComment)
+  console.log("id: "+recipeId)
+  console.log("kommentar: " +currentComment)
   console.log(recipeId)
-  fetch(`http://localhost:8080/recipes/nupdate/${recipeId}`, {
+  fetch(`http://localhost:8080/recipes/update/${recipeId}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
